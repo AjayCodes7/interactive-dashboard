@@ -4,6 +4,7 @@ import * as Slider from "@radix-ui/react-slider";
 import { useState, useMemo } from "react";
 import { format, differenceInDays } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react"; // icon library
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 export default function TimelineSlider() {
   const now = new Date();
@@ -127,12 +128,29 @@ export default function TimelineSlider() {
           <Slider.Range className="absolute h-full bg-purple-500 rounded-full" />
         </Slider.Track>
 
-        {value.map((_, i) => (
-          <Slider.Thumb
-            key={i}
-            className="block w-4 h-4 bg-purple-600 rounded-full border-2 border-white cursor-pointer"
-          />
-        ))}
+        {value.map((v, i) => (
+  <Tooltip.Provider key={i} delayDuration={0}>
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>
+        <Slider.Thumb
+          aria-label={mode === "single" ? "Time Selector" : i === 0 ? "Start Time" : "End Time"}
+          className="block w-4 h-4 bg-purple-600 rounded-full border-2 border-white cursor-pointer"
+        />
+      </Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content
+          side="top"
+          className="px-2 py-1 text-xs text-white bg-gray-800 rounded shadow-lg"
+        >
+          {resolution === "hourly"
+            ? format(data[v], "MMM dd, yyyy HH:00")
+            : format(data[v], "MMM dd, yyyy")}
+          <Tooltip.Arrow className="fill-gray-800" />
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  </Tooltip.Provider>
+))}
       </Slider.Root>
 
       {/* Selected Values */}
