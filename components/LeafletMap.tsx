@@ -65,22 +65,6 @@ export default function LeafletMap() {
     setTempPolygon((prev) => [...prev, latlng]);
   };
 
-  // const finishPolygon = () => {
-  //   if (tempPolygon.length < 3) {
-  //     alert("A polygon requires at least 3 points.");
-  //     return;
-  //   }
-
-  //   const datasetName = window.prompt("Enter a name for this dataset:", "Dataset A");
-  //   if (!datasetName || !datasetName.trim()) {
-  //     alert("Polygon creation cancelled.");
-  //     return;
-  //   }
-
-  //   setPolygons((prev) => [...prev, { coords: tempPolygon, dataSource: datasetName.trim() }]);
-  //   setTempPolygon([]);
-  //   setDrawing(false);
-  // };
 
   const [datasetColors, setDatasetColors] = useState<Record<string, string>>({
   "Dataset A": "#8B5CF6",
