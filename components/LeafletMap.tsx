@@ -7,7 +7,7 @@ import {
   Marker,
   useMapEvents
 } from "react-leaflet";
-import { useState } from "react";
+import { useState , useEffect} from "react";
 import L, { LatLngExpression, DivIcon } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -40,9 +40,18 @@ export default function LeafletMap() {
   const [center] = useState<LatLngExpression>([17.385044, 78.486671]);
   const [drawing, setDrawing] = useState(false);
   const [polygons, setPolygons] = useState<
-    { coords: LatLngExpression[]; dataSource: string }[]
+    { coords: LatLngExpression[]; dataSource: string, color:string }[]
   >([]);
   const [tempPolygon, setTempPolygon] = useState<LatLngExpression[]>([]);
+
+  useEffect(() => {
+  localStorage.setItem("polygons", JSON.stringify(polygons));
+}, [polygons]);
+
+useEffect(() => {
+  const saved = localStorage.getItem("polygons");
+  if (saved) setPolygons(JSON.parse(saved));
+}, []);
 
   const handleMapClick = (latlng: LatLngExpression) => {
     if (!drawing) return;
@@ -64,22 +73,53 @@ export default function LeafletMap() {
     setTempPolygon((prev) => [...prev, latlng]);
   };
 
-  const finishPolygon = () => {
-    if (tempPolygon.length < 3) {
-      alert("A polygon requires at least 3 points.");
-      return;
-    }
+  // const finishPolygon = () => {
+  //   if (tempPolygon.length < 3) {
+  //     alert("A polygon requires at least 3 points.");
+  //     return;
+  //   }
 
-    const datasetName = window.prompt("Enter a name for this dataset:", "Dataset A");
-    if (!datasetName || !datasetName.trim()) {
-      alert("Polygon creation cancelled.");
-      return;
-    }
+  //   const datasetName = window.prompt("Enter a name for this dataset:", "Dataset A");
+  //   if (!datasetName || !datasetName.trim()) {
+  //     alert("Polygon creation cancelled.");
+  //     return;
+  //   }
 
-    setPolygons((prev) => [...prev, { coords: tempPolygon, dataSource: datasetName.trim() }]);
-    setTempPolygon([]);
-    setDrawing(false);
-  };
+  //   setPolygons((prev) => [...prev, { coords: tempPolygon, dataSource: datasetName.trim() }]);
+  //   setTempPolygon([]);
+  //   setDrawing(false);
+  // };
+
+  const [datasetColors, setDatasetColors] = useState<Record<string, string>>({
+  "Dataset A": "#8B5CF6",
+  "Dataset B": "#10B981",
+  "Dataset C": "#F59E0B",
+});
+
+const finishPolygon = () => {
+  if (tempPolygon.length < 3) {
+    alert("A polygon requires at least 3 points.");
+    return;
+  }
+
+  const datasetName = window.prompt("Enter a name for this dataset:", "Dataset A")?.trim();
+  if (!datasetName) {
+    alert("Polygon creation cancelled.");
+    return;
+  }
+
+  // Assign color if not already stored
+  let color = datasetColors[datasetName];
+  if (!color) {
+    color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+    setDatasetColors((prev) => ({ ...prev, [datasetName]: color }));
+  }
+
+  setPolygons((prev) => [...prev, { coords: tempPolygon, dataSource: datasetName, color }]);
+  setTempPolygon([]);
+  setDrawing(false);
+};
+
 
   const deletePolygon = (index: number) => {
     setPolygons((prev) => prev.filter((_, i) => i !== index));
@@ -109,13 +149,17 @@ export default function LeafletMap() {
 
           <ClickHandler onClick={handleMapClick} drawing={drawing} />
 
-          {polygons.map((polygon, i) => (
+          {/* {polygons.map((polygon, i) => (
             <Polygon
               key={i}
               positions={polygon.coords}
               pathOptions={{ color: "purple" }}
             />
-          ))}
+          ))} */}
+
+            {polygons.map((polygon, i) => (
+  <Polygon key={i} positions={polygon.coords} pathOptions={{ color: polygon.color }} />
+))}
 
           {tempPolygon.length > 1 && (
             <Polygon positions={tempPolygon} pathOptions={{ color: "orange", dashArray: "4" }} />
