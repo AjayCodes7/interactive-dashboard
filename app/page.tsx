@@ -1,10 +1,17 @@
 import TimelineSlider from "@/components/TimelineSlider";
+import InteractiveMap from "@/components/InteractiveMap";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-10 p-10">
-      <h1 className="text-3xl font-bold text-white">Timeline Slider</h1>
-      <TimelineSlider />
-    </main>
+    <div className="flex flex-col items-center bg-gray-950 text-white p-4">
+      {/* Both components share the same container width */}
+      <div className="w-full max-w-6xl">
+        <TimelineSlider />
+      </div>
+
+      <div className="w-full max-w-6xl mt-4">
+        <InteractiveMap />
+      </div>
+    </div>
   );
 }
