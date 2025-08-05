@@ -44,14 +44,6 @@ export default function LeafletMap() {
   >([]);
   const [tempPolygon, setTempPolygon] = useState<LatLngExpression[]>([]);
 
-  useEffect(() => {
-  localStorage.setItem("polygons", JSON.stringify(polygons));
-}, [polygons]);
-
-useEffect(() => {
-  const saved = localStorage.getItem("polygons");
-  if (saved) setPolygons(JSON.parse(saved));
-}, []);
 
   const handleMapClick = (latlng: LatLngExpression) => {
     if (!drawing) return;
