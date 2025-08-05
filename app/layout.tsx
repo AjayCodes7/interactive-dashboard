@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
     subsets: ["latin"],
 });
 
-// Update title and description
+// Updated title and description
 export const metadata: Metadata = {
     title: "Polygon Temperature Visualizer",
     description: "Visualize temperature data across polygons using Open-Meteo API",

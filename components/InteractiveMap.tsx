@@ -1,20 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-type ThresholdRule = {
-    color: string;
-    operator: "<" | "<=" | ">" | ">=" | "=";
-    value: number;
-};
-
-type PolygonData = {
-    coords: [number, number][];
-    dataSource: string;
-    color: string;
-    weatherData?: any;
-};
-
-type LatLngExpression = [number, number];
+import { ThresholdRule, PolygonData, LatLngExpression } from "@/types/types";
 
 const Map = dynamic(() => import("./LeafletMap"), { ssr: false });
 

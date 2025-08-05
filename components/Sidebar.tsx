@@ -1,11 +1,6 @@
 "use client";
-type ThresholdRule = {
-    color: string;
-    operator: "<" | "<=" | ">" | ">=" | "=";
-    value: number;
-};
-
 import { Trash2 } from "lucide-react";
+import { ThresholdRule } from "@/types/types";
 
 export default function ThresholdSidebar({
     rules,

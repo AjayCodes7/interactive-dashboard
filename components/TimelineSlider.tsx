@@ -5,17 +5,7 @@ import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-
-type TimelineSliderProps = {
-    startDate: Date;
-    setStartDate: (date: Date) => void;
-    endDate: Date;
-    setEndDate: (date: Date) => void;
-    resolution: "hourly" | "daily";
-    setResolution: (res: "hourly" | "daily") => void;
-    activeTimeIndex: number;
-    setActiveTimeIndex: (index: number) => void;
-};
+import { TimelineSliderProps } from "@/types/types";
 
 export default function TimelineSlider({
     startDate,

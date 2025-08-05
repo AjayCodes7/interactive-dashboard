@@ -3,19 +3,7 @@ import TimelineSlider from "@/components/TimelineSlider";
 import InteractiveMap from "@/components/InteractiveMap";
 import ThresholdSidebar from "@/components/Sidebar";
 import { useState, useEffect } from "react";
-
-type ThresholdRule = {
-    color: string;
-    operator: "<" | "<=" | ">" | ">=" | "=";
-    value: number;
-};
-
-type PolygonData = {
-    coords: [number, number][];
-    dataSource: string;
-    color: string;
-    weatherData?: any;
-};
+import { ThresholdRule, PolygonData } from "@/types/types";
 
 export default function Home() {
     const [thresholdRules, setThresholdRules] = useState<ThresholdRule[]>([]);
@@ -46,6 +34,7 @@ export default function Home() {
         return "gray"; // Default if no rules match
     };
 
+    // Function to find the nearest time index according to the user selected input
     const findNearestTimeIndex = (timeArray: string[], targetDate: Date) => {
         const targetTime = targetDate.getTime();
         let nearestIndex = 0;
@@ -72,7 +61,7 @@ export default function Home() {
             for (const polygon of polygons) {
                 const [lat, lng] = getCentroid(polygon.coords);
 
-                console.log(`Calling Open-Meteo API for centroid: ${lat}, ${lng}`);
+                // console.log(`Calling Open-Meteo API for centroid: ${lat}, ${lng}`);
 
                 const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${
                     startDate.toISOString().split("T")[0]
@@ -80,11 +69,13 @@ export default function Home() {
 
                 const response = await fetch(url);
                 const data = await response.json();
-                console.log(response);
+
+                // console.log(response);
 
                 if (!data?.hourly?.time || !data?.hourly?.temperature_2m) continue;
 
                 // Determine target time
+                // In case of range i took the mid point of start and end times
                 const targetTime =
                     startDate.getTime() === endDate.getTime()
                         ? startDate

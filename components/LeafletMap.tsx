@@ -3,22 +3,8 @@
 import { MapContainer, TileLayer, Polygon, Marker, useMapEvents } from "react-leaflet";
 import { useState } from "react";
 import L, { DivIcon } from "leaflet";
+import { ThresholdRule, PolygonData, LatLngExpression } from "@/types/types";
 import "leaflet/dist/leaflet.css";
-
-type ThresholdRule = {
-    color: string;
-    operator: "<" | "<=" | ">" | ">=" | "=";
-    value: number;
-};
-
-type PolygonData = {
-    coords: [number, number][];
-    dataSource: string;
-    color: string;
-    weatherData?: any;
-};
-
-type LatLngExpression = [number, number];
 
 const pointIcon = (color: string): DivIcon =>
     L.divIcon({
