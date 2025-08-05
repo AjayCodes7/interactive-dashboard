@@ -2,20 +2,31 @@
 
 import * as Slider from "@radix-ui/react-slider";
 import { useState, useMemo } from "react";
-import { format, differenceInDays } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react"; // icon library
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
-export default function TimelineSlider() {
+type TimelineSliderProps = {
+    startDate: Date;
+    setStartDate: (date: Date) => void;
+    endDate: Date;
+    setEndDate: (date: Date) => void;
+    resolution: "hourly" | "daily";
+    setResolution: (res: "hourly" | "daily") => void;
+};
+
+export default function TimelineSlider({
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    resolution,
+    setResolution,
+}: TimelineSliderProps) {
     const now = new Date();
-
-    // Dropdown selection: hourly or day-wise resolution
-    const [resolution, setResolution] = useState<"hourly" | "daily">("hourly");
-
-    // Mode: single or range
     const [mode, setMode] = useState<"single" | "range">("single");
 
-    // Generate data based on resolution
+    // Generate date array
     const data = useMemo(() => {
         if (resolution === "hourly") {
             return Array.from({ length: 30 * 24 }, (_, i) => {
@@ -30,75 +41,64 @@ export default function TimelineSlider() {
                 return date;
             });
         }
-    }, [resolution, now]);
+    }, [resolution]);
 
-    // Default slider values
-    const [value, setValue] = useState<number[]>([data.length - 1]);
+    // Map startDate and endDate to slider indices
+    const value = useMemo(() => {
+        const formatKey = resolution === "hourly" ? "yyyy-MM-dd HH:00" : "yyyy-MM-dd";
+        const findIndex = (target: Date) =>
+            data.findIndex((d) => format(d, formatKey) === format(target, formatKey));
 
-    // Handle mode toggle
-    const toggleMode = () => {
         if (mode === "single") {
-            setMode("range");
-            setValue([data.length - (resolution === "hourly" ? 24 : 5), data.length - 1]);
+            const idx = findIndex(endDate);
+            return [idx !== -1 ? idx : data.length - 1];
         } else {
-            setMode("single");
-            setValue([data.length - 1]);
+            const startIdx = findIndex(startDate);
+            const endIdx = findIndex(endDate);
+            return [startIdx !== -1 ? startIdx : 0, endIdx !== -1 ? endIdx : data.length - 1];
         }
-    };
+    }, [startDate, endDate, data, mode, resolution]);
 
-    // // Handle resolution change
-    // const handleResolutionChange = (res: "hourly" | "daily") => {
-    //   setResolution(res);
-    //   if (mode === "single") {
-    //     setValue([res === "hourly" ? 719 : 29]);
-    //   } else {
-    //     setValue([res === "hourly" ? 696 : 25, res === "hourly" ? 719 : 29]);
-    //   }
-    // };
-
-    const handleResolutionChange = (res: "hourly" | "daily") => {
-        const length = res === "hourly" ? 30 * 24 : 30;
-        setResolution(res);
+    // Handle slider changes
+    const handleValueChange = (val: number[]) => {
         if (mode === "single") {
-            setValue([length - 1]);
+            const selected = data[val[0]];
+            setStartDate(selected);
+            setEndDate(selected); // same for single mode
         } else {
-            setValue([length - Math.floor(length / 5), length - 1]);
+            const start = data[val[0]];
+            const end = data[val[1]];
+            setStartDate(start);
+            setEndDate(end);
         }
+        console.log(startDate);
+        console.log(endDate);
     };
-
-    // Calculate displayed period
-    const startDate = data[mode === "single" ? value[0] : value[0]];
-    const endDate = mode === "single" ? data[value[0]] : data[value[1]];
-
-    const periodDays = mode === "single" ? 1 : differenceInDays(endDate, startDate) + 1; // inclusive day count
 
     return (
         <div className="w-full p-4 bg-slate-900 rounded-xl">
-            {/* Summary Header */}
+            {/* Header */}
             <div className="flex items-center gap-2 mb-4 text-white">
                 <CalendarIcon size={18} />
                 <span className="text-sm font-medium">
-                    Time Period: {format(startDate, "MMM dd, yyyy")} →
-                    {mode === "single" ? "" : ` ${format(endDate, "MMM dd, yyyy")}`} ({periodDays}{" "}
-                    {periodDays === 1 ? "day" : "days"})
+                    Time Period: {format(startDate, "MMM dd, yyyy")}
+                    {mode === "single" ? "" : ` → ${format(endDate, "MMM dd, yyyy")}`}
                 </span>
             </div>
 
             {/* Controls */}
             <div className="flex justify-between mb-4">
-                {/* Resolution Dropdown */}
                 <select
                     value={resolution}
-                    onChange={(e) => handleResolutionChange(e.target.value as "hourly" | "daily")}
+                    onChange={(e) => setResolution(e.target.value as "hourly" | "daily")}
                     className="px-3 py-2 bg-slate-800 text-white rounded border border-gray-700"
                 >
                     <option value="hourly">Hourly Resolution</option>
                     <option value="daily">Day-wise Resolution</option>
                 </select>
 
-                {/* Mode Toggle */}
                 <button
-                    onClick={toggleMode}
+                    onClick={() => setMode(mode === "single" ? "range" : "single")}
                     className="px-4 py-2 text-white bg-purple-600 rounded hover:bg-purple-700"
                 >
                     {mode === "single" ? "Switch to Range" : "Switch to Single"}
@@ -118,7 +118,7 @@ export default function TimelineSlider() {
                 max={data.length - 1}
                 step={1}
                 min={0}
-                onValueChange={setValue}
+                onValueChange={handleValueChange}
             >
                 <Slider.Track className="relative flex-grow h-1 bg-gray-600 rounded-full">
                     <Slider.Range className="absolute h-full bg-purple-500 rounded-full" />
@@ -155,22 +155,22 @@ export default function TimelineSlider() {
                 ))}
             </Slider.Root>
 
-            {/* Selected Values */}
+            {/* Selected Value */}
             <div className="mt-4 text-center text-sm text-purple-400">
                 {mode === "single"
                     ? `Selected: ${
                           resolution === "hourly"
-                              ? format(data[value[0]], "MMM dd, yyyy HH:00")
-                              : format(data[value[0]], "MMM dd, yyyy")
+                              ? format(endDate, "MMM dd, yyyy HH:00")
+                              : format(endDate, "MMM dd, yyyy")
                       }`
                     : `Selected: ${
                           resolution === "hourly"
-                              ? format(data[value[0]], "MMM dd, yyyy HH:00")
-                              : format(data[value[0]], "MMM dd, yyyy")
+                              ? format(startDate, "MMM dd, yyyy HH:00")
+                              : format(startDate, "MMM dd, yyyy")
                       } → ${
                           resolution === "hourly"
-                              ? format(data[value[1]], "MMM dd, yyyy HH:00")
-                              : format(data[value[1]], "MMM dd, yyyy")
+                              ? format(endDate, "MMM dd, yyyy HH:00")
+                              : format(endDate, "MMM dd, yyyy")
                       }`}
             </div>
         </div>

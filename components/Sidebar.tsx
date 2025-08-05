@@ -53,7 +53,7 @@ export default function ThresholdSidebar({
 
                     <input
                         type="number"
-                        value={rule.value}
+                        value={rule.value || 0}
                         onChange={(e) => updateRule(i, { value: parseFloat(e.target.value) })}
                         className="bg-slate-800 text-white rounded px-2 py-1 w-20"
                     />

@@ -2,9 +2,8 @@
 
 import { MapContainer, TileLayer, Polygon, Marker, useMapEvents } from "react-leaflet";
 import { useState, useEffect } from "react";
-import L, { LatLngExpression, DivIcon } from "leaflet";
+import L, { DivIcon } from "leaflet";
 import "leaflet/dist/leaflet.css";
-
 import { fetchWeatherData, getCentroid } from "@/utils/fetchWeatherData";
 
 type ThresholdRule = {
@@ -13,12 +12,20 @@ type ThresholdRule = {
     value: number;
 };
 
-// Custom icon
+type PolygonData = {
+    coords: [number, number][];
+    dataSource: string;
+    color: string;
+    weatherData?: any;
+};
+
+type LatLngExpression = [number, number];
+
 const pointIcon = (color: string): DivIcon =>
     L.divIcon({
         className: "custom-point-icon",
         html: `<div style="width:12px;height:12px;background-color:${color};
-      border:1px solid white;border-radius:3px;"></div>`,
+        border:1px solid white;border-radius:3px;"></div>`,
         iconSize: [12, 12],
         iconAnchor: [6, 6],
     });
@@ -38,18 +45,42 @@ function ClickHandler({
     return null;
 }
 
-export default function LeafletMap({ thresholdRules }: { thresholdRules: ThresholdRule[] }) {
-    const [center] = useState<LatLngExpression>([17.385044, 78.486671]);
-    const [drawing, setDrawing] = useState(false);
-    const [polygons, setPolygons] = useState<
-        {
-            coords: LatLngExpression[];
-            dataSource: string;
-            color: string;
-            weatherData?: any;
-        }[]
-    >([]);
-    const [tempPolygon, setTempPolygon] = useState<LatLngExpression[]>([]);
+export default function LeafletMap({
+    thresholdRules,
+    drawing,
+    setDrawing,
+    polygons,
+    setPolygons,
+    tempPolygon,
+    setTempPolygon,
+    datasetColors,
+    setDatasetColors,
+}: {
+    thresholdRules: ThresholdRule[];
+    drawing: boolean;
+    setDrawing: (v: boolean) => void;
+    polygons: PolygonData[];
+    setPolygons: (v: PolygonData[] | ((prev: PolygonData[]) => PolygonData[])) => void;
+    tempPolygon: LatLngExpression[];
+    setTempPolygon: (
+        v: LatLngExpression[] | ((prev: LatLngExpression[]) => LatLngExpression[])
+    ) => void;
+    datasetColors: Record<string, string>;
+    setDatasetColors: (
+        v: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)
+    ) => void;
+}) {
+    const [center] = useState<LatLngExpression>([17.683444, 83.220814]);
+    // const [drawing, setDrawing] = useState(false);
+    // const [polygons, setPolygons] = useState<
+    //     {
+    //         coords: LatLngExpression[];
+    //         dataSource: string;
+    //         color: string;
+    //         weatherData?: any;
+    //     }[]
+    // >([]);
+    // const [tempPolygon, setTempPolygon] = useState<LatLngExpression[]>([]);
 
     const handleMapClick = (latlng: LatLngExpression) => {
         if (!drawing) return;
@@ -73,18 +104,17 @@ export default function LeafletMap({ thresholdRules }: { thresholdRules: Thresho
         setTempPolygon((prev) => [...prev, latlng]);
     };
 
-    const [datasetColors, setDatasetColors] = useState<Record<string, string>>({
-        "Dataset A": "#8B5CF6",
-        "Dataset B": "#10B981",
-        "Dataset C": "#F59E0B",
-    });
+    // const [datasetColors, setDatasetColors] = useState<Record<string, string>>({
+    //     "Dataset A": "#8B5CF6",
+    //     "Dataset B": "#10B981",
+    //     "Dataset C": "#F59E0B",
+    // });
 
     useEffect(() => {
         setPolygons((prev) =>
             prev.map((polygon) => {
                 if (!polygon.weatherData) return polygon;
 
-                // For now, just pick hour 0 (later, connect TimelineSlider)
                 const temp = polygon.weatherData.temperature_2m[0];
                 return { ...polygon, color: applyColorRules(temp) };
             })
@@ -120,28 +150,6 @@ export default function LeafletMap({ thresholdRules }: { thresholdRules: Thresho
         setTempPolygon([]);
         setDrawing(false);
     };
-
-    // Helper to convert LatLngExpression to [number, number]
-    function toLatLngTuple(point: LatLngExpression): [number, number] {
-        if (Array.isArray(point)) return point as [number, number];
-        if ("lat" in point && "lng" in point) return [point.lat, point.lng];
-        if ((point as any).lat !== undefined && (point as any).lng !== undefined)
-            return [(point as any).lat, (point as any).lng];
-        // fallback
-        return [0, 0];
-    }
-
-    // Calculate centroid of polygon
-    function getCentroid(points: LatLngExpression[]): [number, number] {
-        let latSum = 0,
-            lngSum = 0;
-        points.forEach((pt) => {
-            const [lat, lng] = toLatLngTuple(pt);
-            latSum += lat;
-            lngSum += lng;
-        });
-        return [latSum / points.length, lngSum / points.length];
-    }
 
     const deletePolygon = (index: number) => {
         setPolygons((prev) => prev.filter((_, i) => i !== index));
@@ -185,14 +193,6 @@ export default function LeafletMap({ thresholdRules }: { thresholdRules: Thresho
                     />
 
                     <ClickHandler onClick={handleMapClick} drawing={drawing} />
-
-                    {/* {polygons.map((polygon, i) => (
-            <Polygon
-              key={i}
-              positions={polygon.coords}
-              pathOptions={{ color: "purple" }}
-            />
-          ))} */}
 
                     {polygons.map((polygon, i) => (
                         <Polygon

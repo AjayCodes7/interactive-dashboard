@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import dynamic from "next/dynamic";
 type ThresholdRule = {
     color: string;
@@ -8,9 +7,53 @@ type ThresholdRule = {
     value: number;
 };
 
-// Dynamically import React-Leaflet components
+type PolygonData = {
+    coords: [number, number][];
+    dataSource: string;
+    color: string;
+    weatherData?: any;
+};
+
+type LatLngExpression = [number, number];
+
 const Map = dynamic(() => import("./LeafletMap"), { ssr: false });
 
-export default function InteractiveMap({ thresholdRules }: { thresholdRules: ThresholdRule[] }) {
-    return <Map thresholdRules={thresholdRules} />;
+export default function InteractiveMap({
+    thresholdRules,
+    drawing,
+    setDrawing,
+    polygons,
+    setPolygons,
+    tempPolygon,
+    setTempPolygon,
+    datasetColors,
+    setDatasetColors,
+}: {
+    thresholdRules: ThresholdRule[];
+    drawing: boolean;
+    setDrawing: (v: boolean) => void;
+    polygons: PolygonData[];
+    setPolygons: (v: PolygonData[] | ((prev: PolygonData[]) => PolygonData[])) => void;
+    tempPolygon: LatLngExpression[];
+    setTempPolygon: (
+        v: LatLngExpression[] | ((prev: LatLngExpression[]) => LatLngExpression[])
+    ) => void;
+    datasetColors: Record<string, string>;
+    setDatasetColors: (
+        v: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)
+    ) => void;
+}) {
+    return (
+        <Map
+            thresholdRules={thresholdRules}
+            drawing={drawing}
+            setDrawing={setDrawing}
+            polygons={polygons}
+            setPolygons={setPolygons}
+            tempPolygon={tempPolygon}
+            setTempPolygon={setTempPolygon}
+            datasetColors={datasetColors}
+            setDatasetColors={setDatasetColors}
+        />
+    );
 }
