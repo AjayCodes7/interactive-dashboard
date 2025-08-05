@@ -71,8 +71,8 @@ export default function TimelineSlider({
             setStartDate(start);
             setEndDate(end);
         }
-        console.log(startDate);
-        console.log(endDate);
+        // console.log(startDate);
+        // console.log(endDate);
     };
 
     return (

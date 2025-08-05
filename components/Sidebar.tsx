@@ -18,6 +18,7 @@ export default function ThresholdSidebar({
 
     const updateRule = (index: number, updated: Partial<ThresholdRule>) => {
         setRules(rules.map((r, i) => (i === index ? { ...r, ...updated } : r)));
+        console.log(rules);
     };
 
     const deleteRule = (index: number) => {

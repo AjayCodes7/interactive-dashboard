@@ -28,9 +28,9 @@ export default function Home() {
     const [polygons, setPolygons] = useState<PolygonData[]>([]);
     const [tempPolygon, setTempPolygon] = useState<[number, number][]>([]);
     const [datasetColors, setDatasetColors] = useState<Record<string, string>>({
-        "Dataset A": "#8B5CF6",
-        "Dataset B": "#10B981",
-        "Dataset C": "#F59E0B",
+        // "Dataset A": "#8B5CF6",
+        // "Dataset B": "#10B981",
+        // "Dataset C": "#F59E0B",
     });
 
     return (
