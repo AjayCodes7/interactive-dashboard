@@ -5,6 +5,8 @@ type ThresholdRule = {
     value: number;
 };
 
+import { Trash2 } from "lucide-react";
+
 export default function ThresholdSidebar({
     rules,
     setRules,
@@ -26,9 +28,19 @@ export default function ThresholdSidebar({
     };
 
     return (
-        <div className="bg-slate-900 p-4 rounded-lg w-64">
-            <h3 className="text-lg font-semibold mb-2">Threshold Rules</h3>
+        <div className="bg-slate-900 p-4 rounded-lg mt-5 w-96">
+            {/* Header with Add Rule button */}
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Threshold Rules</h3>
+                <button
+                    onClick={addRule}
+                    className="bg-purple-600 hover:bg-purple-700 text-white rounded px-4 py-2"
+                >
+                    Add Rule
+                </button>
+            </div>
 
+            {/* Rules List */}
             {rules.map((rule, i) => (
                 <div key={i} className="flex items-center gap-2 mb-2">
                     <input
@@ -63,17 +75,10 @@ export default function ThresholdSidebar({
                         onClick={() => deleteRule(i)}
                         className="text-red-400 hover:text-red-500"
                     >
-                        🗑
+                        <Trash2 size={20} />
                     </button>
                 </div>
             ))}
-
-            <button
-                onClick={addRule}
-                className="bg-purple-600 hover:bg-purple-700 text-white w-full rounded px-4 py-2 mt-2"
-            >
-                Add Rule
-            </button>
         </div>
     );
 }

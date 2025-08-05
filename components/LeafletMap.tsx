@@ -1,10 +1,9 @@
 "use client";
 
 import { MapContainer, TileLayer, Polygon, Marker, useMapEvents } from "react-leaflet";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import L, { DivIcon } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { fetchWeatherData, getCentroid } from "@/utils/fetchWeatherData";
 
 type ThresholdRule = {
     color: string;
@@ -55,6 +54,7 @@ export default function LeafletMap({
     setTempPolygon,
     datasetColors,
     setDatasetColors,
+    activeTimeIndex,
 }: {
     thresholdRules: ThresholdRule[];
     drawing: boolean;
@@ -69,28 +69,18 @@ export default function LeafletMap({
     setDatasetColors: (
         v: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)
     ) => void;
+    activeTimeIndex: number;
 }) {
     const [center] = useState<LatLngExpression>([17.683444, 83.220814]);
-    // const [drawing, setDrawing] = useState(false);
-    // const [polygons, setPolygons] = useState<
-    //     {
-    //         coords: LatLngExpression[];
-    //         dataSource: string;
-    //         color: string;
-    //         weatherData?: any;
-    //     }[]
-    // >([]);
-    // const [tempPolygon, setTempPolygon] = useState<LatLngExpression[]>([]);
 
     const handleMapClick = (latlng: LatLngExpression) => {
         if (!drawing) return;
 
+        // Close polygon if user clicks first point again
         if (
             tempPolygon.length >= 3 &&
-            Math.abs((tempPolygon[0] as [number, number])[0] - (latlng as [number, number])[0]) <
-                0.0001 &&
-            Math.abs((tempPolygon[0] as [number, number])[1] - (latlng as [number, number])[1]) <
-                0.0001
+            Math.abs(tempPolygon[0][0] - latlng[0]) < 0.0001 &&
+            Math.abs(tempPolygon[0][1] - latlng[1]) < 0.0001
         ) {
             finishPolygon();
             return;
@@ -104,24 +94,22 @@ export default function LeafletMap({
         setTempPolygon((prev) => [...prev, latlng]);
     };
 
-    // const [datasetColors, setDatasetColors] = useState<Record<string, string>>({
-    //     "Dataset A": "#8B5CF6",
-    //     "Dataset B": "#10B981",
-    //     "Dataset C": "#F59E0B",
-    // });
+    const applyColorRules = (value: number) => {
+        for (let rule of thresholdRules) {
+            if (
+                (rule.operator === "<" && value < rule.value) ||
+                (rule.operator === ">" && value > rule.value) ||
+                (rule.operator === "<=" && value <= rule.value) ||
+                (rule.operator === ">=" && value >= rule.value) ||
+                (rule.operator === "=" && value === rule.value)
+            ) {
+                return rule.color;
+            }
+        }
+        return "gray";
+    };
 
-    useEffect(() => {
-        setPolygons((prev) =>
-            prev.map((polygon) => {
-                if (!polygon.weatherData) return polygon;
-
-                const temp = polygon.weatherData.temperature_2m[0];
-                return { ...polygon, color: applyColorRules(temp) };
-            })
-        );
-    }, [thresholdRules]);
-
-    const finishPolygon = async () => {
+    const finishPolygon = () => {
         if (tempPolygon.length < 3) {
             alert("A polygon requires at least 3 points.");
             return;
@@ -139,13 +127,7 @@ export default function LeafletMap({
             setDatasetColors((prev) => ({ ...prev, [datasetName]: color }));
         }
 
-        const [centroidLat, centroidLng] = getCentroid(tempPolygon);
-        const weatherData = await fetchWeatherData(centroidLat, centroidLng);
-
-        setPolygons((prev) => [
-            ...prev,
-            { coords: tempPolygon, dataSource: datasetName, color, weatherData },
-        ]);
+        setPolygons((prev) => [...prev, { coords: tempPolygon, dataSource: datasetName, color }]);
 
         setTempPolygon([]);
         setDrawing(false);
@@ -155,23 +137,9 @@ export default function LeafletMap({
         setPolygons((prev) => prev.filter((_, i) => i !== index));
     };
 
-    const applyColorRules = (temp: number) => {
-        for (let rule of thresholdRules) {
-            if (
-                (rule.operator === "<" && temp < rule.value) ||
-                (rule.operator === ">" && temp > rule.value) ||
-                (rule.operator === "<=" && temp <= rule.value) ||
-                (rule.operator === ">=" && temp >= rule.value) ||
-                (rule.operator === "=" && temp === rule.value)
-            ) {
-                return rule.color;
-            }
-        }
-        return "gray"; // default color
-    };
-
     return (
         <div className="flex gap-4">
+            {/* Map Section */}
             <div
                 className="w-full h-[500px] rounded-xl overflow-hidden border border-gray-700"
                 style={{ cursor: drawing ? "crosshair" : "grab" }}
@@ -224,6 +192,7 @@ export default function LeafletMap({
                 </MapContainer>
             </div>
 
+            {/* Sidebar Section */}
             <div className="w-64 bg-slate-900 rounded-lg p-4">
                 <button
                     onClick={() => setDrawing(!drawing)}

@@ -28,6 +28,7 @@ export default function InteractiveMap({
     setTempPolygon,
     datasetColors,
     setDatasetColors,
+    activeTimeIndex,
 }: {
     thresholdRules: ThresholdRule[];
     drawing: boolean;
@@ -42,6 +43,7 @@ export default function InteractiveMap({
     setDatasetColors: (
         v: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)
     ) => void;
+    activeTimeIndex: number;
 }) {
     return (
         <Map
@@ -54,6 +56,7 @@ export default function InteractiveMap({
             setTempPolygon={setTempPolygon}
             datasetColors={datasetColors}
             setDatasetColors={setDatasetColors}
+            activeTimeIndex={activeTimeIndex}
         />
     );
 }

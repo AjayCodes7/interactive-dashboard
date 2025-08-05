@@ -13,6 +13,8 @@ type TimelineSliderProps = {
     setEndDate: (date: Date) => void;
     resolution: "hourly" | "daily";
     setResolution: (res: "hourly" | "daily") => void;
+    activeTimeIndex: number;
+    setActiveTimeIndex: (index: number) => void;
 };
 
 export default function TimelineSlider({
@@ -22,6 +24,8 @@ export default function TimelineSlider({
     setEndDate,
     resolution,
     setResolution,
+    activeTimeIndex,
+    setActiveTimeIndex,
 }: TimelineSliderProps) {
     const now = new Date();
     const [mode, setMode] = useState<"single" | "range">("single");
@@ -71,8 +75,6 @@ export default function TimelineSlider({
             setStartDate(start);
             setEndDate(end);
         }
-        // console.log(startDate);
-        // console.log(endDate);
     };
 
     return (
