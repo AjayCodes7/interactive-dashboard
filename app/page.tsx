@@ -2,7 +2,7 @@
 import TimelineSlider from "@/components/TimelineSlider";
 import InteractiveMap from "@/components/InteractiveMap";
 import ThresholdSidebar from "@/components/Sidebar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ThresholdRule, PolygonData } from "@/types/types";
 
 export default function Home() {
@@ -56,47 +56,76 @@ export default function Home() {
         const lngSum = coordinates.reduce((sum, coord) => sum + coord[1], 0);
         return [latSum / coordinates.length, lngSum / coordinates.length];
     };
-    useEffect(() => {
-        const fetchWeatherDataForPolygons = async () => {
-            for (const polygon of polygons) {
-                const [lat, lng] = getCentroid(polygon.coords);
+    const cache = useRef(new Map());
 
-                // console.log(`Calling Open-Meteo API for centroid: ${lat}, ${lng}`);
+    const fetchWeatherDataForPolygons = async () => {
+        const updatedPolygons = [];
 
+        for (const polygon of polygons) {
+            const [lat, lng] = getCentroid(polygon.coords);
+
+            const key = `${lat},${lng},${startDate.toISOString().split("T")[0]},${endDate.toISOString().split("T")[0]}`;
+
+            let data;
+
+            // Use cache if available
+            if (cache.current.has(key)) {
+                // console.log("From cache");
+                data = cache.current.get(key);
+                // console.log(data);
+            } else {
+                // console.log("Calling API");
                 const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${
                     startDate.toISOString().split("T")[0]
                 }&end_date=${endDate.toISOString().split("T")[0]}&hourly=temperature_2m`;
 
-                const response = await fetch(url);
-                const data = await response.json();
+                try {
+                    const response = await fetch(url);
+                    data = await response.json();
+                } catch (err) {
+                    console.error("Error fetching weather data:", err);
+                    updatedPolygons.push(polygon);
+                    continue;
+                }
 
-                // console.log(response);
-
-                if (!data?.hourly?.time || !data?.hourly?.temperature_2m) continue;
-
-                // Determine target time
-                // In case of range i took the mid point of start and end times
-                const targetTime =
-                    startDate.getTime() === endDate.getTime()
-                        ? startDate
-                        : new Date((startDate.getTime() + endDate.getTime()) / 2);
-
-                // Find nearest temperature
-                const nearestIndex = findNearestTimeIndex(data.hourly.time, targetTime);
-                const temp = data.hourly.temperature_2m[nearestIndex] ?? 0;
-
-                // Update this polygon's color
-                setPolygons((prevPolygons) =>
-                    prevPolygons.map((p) =>
-                        p.dataSource === polygon.dataSource
-                            ? { ...p, weatherData: data, color: applyColorRules(temp) }
-                            : p
-                    )
-                );
+                // Save result to cache
+                cache.current.set(key, data);
             }
-        };
 
-        fetchWeatherDataForPolygons();
+            if (!data?.hourly?.time || !data?.hourly?.temperature_2m) {
+                updatedPolygons.push(polygon);
+                continue;
+            }
+
+            // Determine target time
+            const targetTime =
+                startDate.getTime() === endDate.getTime()
+                    ? startDate
+                    : new Date((startDate.getTime() + endDate.getTime()) / 2);
+
+            // Find nearest temperature
+            const nearestIndex = findNearestTimeIndex(data.hourly.time, targetTime);
+            const temp = data.hourly.temperature_2m[nearestIndex] ?? 0;
+
+            updatedPolygons.push({
+                ...polygon,
+                weatherData: data,
+                color: applyColorRules(temp),
+            });
+        }
+
+        // console.log(updatedPolygons);
+
+        // Update all polygons at once
+        setPolygons(updatedPolygons);
+    };
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            fetchWeatherDataForPolygons();
+        }, 1000);
+
+        return () => clearTimeout(handler);
     }, [startDate, endDate, resolution, polygons]);
 
     // Update polygon colors when threshold rules or active time index changes
