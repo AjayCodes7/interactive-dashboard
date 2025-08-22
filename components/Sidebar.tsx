@@ -26,7 +26,7 @@ export default function ThresholdSidebar({
         <div className="bg-slate-900 p-4 rounded-lg mt-5 w-96">
             {/* Header with Add Rule button */}
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Threshold Rules</h3>
+                <h3 className="text-lg font-semibold">Threshold Rules (Temp in °C)</h3>
                 <button
                     onClick={addRule}
                     className="bg-purple-600 hover:bg-purple-700 text-white rounded px-4 py-2"
@@ -45,6 +45,7 @@ export default function ThresholdSidebar({
                         className="w-8 h-8 p-0 border-none"
                     />
 
+                    <label>Temp</label>
                     <select
                         value={rule.operator}
                         onChange={(e) =>
@@ -63,9 +64,9 @@ export default function ThresholdSidebar({
                         type="number"
                         value={rule.value || 0}
                         onChange={(e) => updateRule(i, { value: parseFloat(e.target.value) })}
-                        className="bg-slate-800 text-white rounded px-2 py-1 w-20"
+                        className="bg-slate-800 text-white rounded px-2 py-1 w-15"
                     />
-
+                    <label>°C</label>
                     <button
                         onClick={() => deleteRule(i)}
                         className="text-red-400 hover:text-red-500"
